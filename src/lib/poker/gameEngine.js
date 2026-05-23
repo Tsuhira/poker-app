@@ -82,6 +82,18 @@ function isBettingRoundOver(state) {
 function resolveShowdown(state) {
   const community = state.communityCards;
 
+  // Debug: log hole cards at showdown time
+  for (const p of state.players) {
+    const ps = state.playerStates[p.id];
+    const cards = ps.holeCards?.map((c) => `${c.rank}${c.suit}`).join(",") ?? "undefined";
+    if (!ps.holeCards?.length) {
+      console.warn(`[resolveShowdown] WARNING: ${p.id} has empty holeCards! status=${ps.status}`);
+    } else {
+      console.log(`[resolveShowdown] ${p.id}: holeCards=[${cards}] status=${ps.status}`);
+    }
+  }
+  console.log(`[resolveShowdown] community: ${community.map((c) => `${c.rank}${c.suit}`).join(",")}`);
+
   // Calculate final pots from totalBets
   const psMap = {};
   for (const p of state.players) {
@@ -96,7 +108,7 @@ function resolveShowdown(state) {
     const pot = state.pots[potIdx];
     const candidates = pot.eligiblePlayers.map((id) => ({
       id,
-      hand: bestHand([...state.playerStates[id].holeCards, ...community]),
+      hand: bestHand([...(state.playerStates[id].holeCards ?? []), ...community]),
     }));
 
     candidates.sort((a, b) => -compareHands(a.hand, b.hand)); // best first
