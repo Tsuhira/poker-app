@@ -4,6 +4,9 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "/poker-app/",
+  build: {
+    outDir: "docs",
+  },
   test: {
     environment: "node",
   },
