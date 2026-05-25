@@ -4,7 +4,6 @@ import { PotDisplay } from "../components/PotDisplay.jsx";
 import { PlayerSeat } from "../components/PlayerSeat.jsx";
 import { ActionPanel } from "../components/ActionPanel.jsx";
 import { ShowdownReveal } from "../components/ShowdownReveal.jsx";
-import { GameLog } from "../components/GameLog.jsx";
 
 const STREET_LABEL = {
   pre_flop: "プリフロップ",
@@ -15,7 +14,7 @@ const STREET_LABEL = {
 };
 
 export default function Game({ room, myPlayerId }) {
-  const { gameState, myCards, isMyTurn, isHost, log, gameEnded } = room;
+  const { gameState, myCards, isMyTurn, isHost, gameEnded, roomId } = room;
   if (!gameState) return null;
 
   const { players, playerStates, communityCards, pots, currentPlayerIndex, dealerIndex, settings } = gameState;
@@ -53,9 +52,6 @@ export default function Game({ room, myPlayerId }) {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
-      {/* Game Log */}
-      <GameLog log={log} />
-
       {/* Header */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -64,8 +60,8 @@ export default function Game({ room, myPlayerId }) {
         <span style={{ fontSize: 14, color: "#95d5b2" }}>
           {STREET_LABEL[gameState.street] ?? gameState.street}
         </span>
-        <span style={{ fontSize: 13, color: "#aaa" }}>
-          SB {settings?.sb} / BB {settings?.bb}
+        <span style={{ fontSize: 11, color: "#555", letterSpacing: "0.05em" }}>
+          {roomId}
         </span>
         <button
           className="btn-secondary"
