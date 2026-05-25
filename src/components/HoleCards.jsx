@@ -2,21 +2,24 @@ const SUIT_SYMBOL = { S: "♠", H: "♥", D: "♦", C: "♣" };
 const SUIT_COLOR  = { S: "#222", H: "#d62828", D: "#d62828", C: "#222" };
 const RANK_LABEL  = { 11: "J", 12: "Q", 13: "K", 14: "A" };
 
-function CardFront({ suit, rank, small = false }) {
-  const w = small ? 36 : 52;
-  const h = small ? 52 : 76;
-  const fs = small ? 13 : 18;
+function CardFront({ suit, rank, small = false, xsmall = false }) {
+  const w = xsmall ? 26 : small ? 36 : 52;
+  const h = xsmall ? 38 : small ? 52 : 76;
+  const fs = xsmall ? 9 : small ? 13 : 18;
+  const suitFs = xsmall ? 11 : small ? 16 : 22;
+  const r = xsmall ? 3 : small ? 4 : 6;
+  const pad = xsmall ? "2px 3px" : small ? "3px 4px" : "4px 6px";
   const label = RANK_LABEL[rank] ?? String(rank);
   return (
     <div style={{
-      width: w, height: h, background: "#fff", borderRadius: small ? 4 : 6,
+      width: w, height: h, background: "#fff", borderRadius: r,
       border: "1px solid #ccc", display: "flex", flexDirection: "column",
-      justifyContent: "space-between", padding: small ? "3px 4px" : "4px 6px",
+      justifyContent: "space-between", padding: pad,
       color: SUIT_COLOR[suit], fontSize: fs, fontWeight: "bold",
       boxShadow: "0 2px 6px rgba(0,0,0,0.4)", flexShrink: 0,
     }}>
       <div style={{ lineHeight: 1 }}>{label}</div>
-      <div style={{ textAlign: "center", fontSize: small ? 16 : 22 }}>{SUIT_SYMBOL[suit]}</div>
+      <div style={{ textAlign: "center", fontSize: suitFs }}>{SUIT_SYMBOL[suit]}</div>
       <div style={{ alignSelf: "flex-end", transform: "rotate(180deg)", lineHeight: 1 }}>{label}</div>
     </div>
   );
