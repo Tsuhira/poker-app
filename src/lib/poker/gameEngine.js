@@ -154,6 +154,7 @@ function resolveUncontestedWin(state) {
   state.playerStates[winner.id].chips += total;
   state.winners = [{ playerId: winner.id, potIndex: 0, amount: total, handRank: null, bestHand: null }];
   state.street = "showdown";
+  state.uncontested = true;
   markEliminated(state);
   return state;
 }
@@ -275,6 +276,7 @@ export function startHand(state) {
   next.currentBet = 0;
   next.lastAggressor = null;
   next.winners = null;
+  next.uncontested = false;
   next.minRaise = next.settings.bb;
 
   // Post blinds

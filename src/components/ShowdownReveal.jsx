@@ -51,8 +51,32 @@ function HighlightCard({ card, inBest, inCombo, xsmall = false }) {
 export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pendingPlayers = [] }) {
   if (!gameState || gameState.street !== "showdown") return null;
 
-  const { winners = [], players, playerStates, communityCards = [], handResults = {} } = gameState;
+  const { winners = [], players, playerStates, communityCards = [], handResults = {}, uncontested = false } = gameState;
   const winnerIds = new Set(winners.map((w) => w.playerId));
+
+  if (uncontested) {
+    const w = winners[0];
+    const winnerName = players.find((p) => p.id === w?.playerId)?.displayName ?? "?";
+    return (
+      <div style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", gap: 16, zIndex: 100,
+      }}>
+        <div style={{ fontSize: 22, color: "#95d5b2" }}>全員フォールド</div>
+        <div style={{ fontSize: 28, fontWeight: "bold" }}>{winnerName} 🏆</div>
+        {w && <div style={{ fontSize: 18, color: "#f4a261" }}>+{w.amount.toLocaleString()}</div>}
+        {pendingPlayers.length > 0 && (
+          <p style={{ fontSize: 13, color: "#95d5b2", margin: 0 }}>
+            {pendingPlayers.map((p) => p.displayName).join(", ")} が次のハンドから参加
+          </p>
+        )}
+        {isHost && (
+          <button className="btn-primary btn-lg" onClick={onNextHand}>次のハンドへ</button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{

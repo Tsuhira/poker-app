@@ -40,6 +40,7 @@ function makePublicState(fullState) {
     lastAggressor: fullState.lastAggressor,
     winners: fullState.winners,
     handResults: fullState.handResults ?? {},
+    uncontested: fullState.uncontested ?? false,
     settings: fullState.settings,
     players: fullState.players,
   };
