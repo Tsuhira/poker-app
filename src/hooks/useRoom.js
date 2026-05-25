@@ -39,6 +39,7 @@ function makePublicState(fullState) {
     playerStates,
     lastAggressor: fullState.lastAggressor,
     winners: fullState.winners,
+    handResults: fullState.handResults ?? {},
     settings: fullState.settings,
     players: fullState.players,
   };

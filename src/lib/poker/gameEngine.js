@@ -126,6 +126,18 @@ function resolveShowdown(state) {
     });
   }
 
+  // 全非フォールドプレイヤーのハンド結果を記録（表示用）
+  const handResults = {};
+  for (const p of state.players) {
+    const ps = state.playerStates[p.id];
+    if (ps.status === "folded" || ps.status === "eliminated") continue;
+    if ((ps.holeCards?.length ?? 0) > 0) {
+      const result = bestHand([...ps.holeCards, ...community]);
+      handResults[p.id] = { rank: result.rank, name: result.name, bestCards: result.bestCards };
+    }
+  }
+  state.handResults = handResults;
+
   state.winners = winners;
   state.street = "showdown";
   markEliminated(state);

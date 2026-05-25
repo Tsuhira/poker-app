@@ -1,5 +1,4 @@
 import { CardFront } from "./HoleCards.jsx";
-import { bestHand } from "../lib/poker/handEvaluator.js";
 
 const HAND_NAMES = ["High Card","One Pair","Two Pair","Three of a Kind","Straight","Flush","Full House","Four of a Kind","Straight Flush","Royal Flush"];
 
@@ -22,7 +21,7 @@ function HighlightCard({ card, inBest, xsmall = false }) {
 export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pendingPlayers = [] }) {
   if (!gameState || gameState.street !== "showdown") return null;
 
-  const { winners = [], players, playerStates, communityCards = [] } = gameState;
+  const { winners = [], players, playerStates, communityCards = [], handResults = {} } = gameState;
   const winnerIds = new Set(winners.map((w) => w.playerId));
 
   return (
@@ -43,9 +42,9 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pend
             const winInfo = winners.find((w) => w.playerId === p.id);
 
             const holeCards = ps?.holeCards ?? [];
-            const allCards = [...holeCards, ...communityCards];
-            const best = allCards.length >= 5 ? bestHand(allCards) : null;
-            const bestSet = new Set(best?.bestCards?.map(cardKey) ?? []);
+            // サーバー側で計算済みのハンド結果を使用（クライアント再計算なし）
+            const hr = handResults[p.id];
+            const bestSet = new Set(hr?.bestCards?.map(cardKey) ?? []);
 
             return (
               <div key={p.id} style={{
@@ -65,8 +64,8 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pend
                     ))}
                   </div>
                 ) : (
-                  <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 6, opacity: 0.4 }}>
-                    {[0,1].map(i => <CardFront key={i} suit="S" rank={0} small />)}
+                  <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 6, opacity: 0.3 }}>
+                    {[0,1].map(i => <CardFront key={i} suit="S" rank={2} small />)}
                   </div>
                 )}
 
@@ -79,10 +78,10 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pend
                   </div>
                 )}
 
-                {/* ハンド名 */}
-                {best && (
+                {/* ハンド名（サーバー計算値） */}
+                {hr && (
                   <div style={{ fontSize: 12, color: "#95d5b2", marginBottom: 4 }}>
-                    {HAND_NAMES[best.rank] ?? ""}
+                    {HAND_NAMES[hr.rank] ?? hr.name ?? ""}
                   </div>
                 )}
 
