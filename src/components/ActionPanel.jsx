@@ -8,6 +8,9 @@ export function ActionPanel({ gameState, myPlayerId, onAction }) {
   const ps = gameState.playerStates[myPlayerId];
   if (!ps || ps.status !== "active") return null;
 
+  const pot = Object.values(gameState.playerStates).reduce((s, p) => s + (p.totalBet ?? 0), 0);
+  const bb = gameState.settings?.bb ?? 20;
+
   const toCall = gameState.currentBet - ps.bet;
   const canCheck = toCall === 0;
   const canCall  = toCall > 0 && ps.chips > toCall;
@@ -33,6 +36,9 @@ export function ActionPanel({ gameState, myPlayerId, onAction }) {
           myBet={ps.bet}
           myChips={ps.chips}
           onRaise={(amount) => act({ type: "raise", amount })}
+          pot={pot}
+          bb={bb}
+          street={gameState.street}
         />
       )}
 
