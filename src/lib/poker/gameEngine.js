@@ -69,7 +69,7 @@ function postBlind(state, playerId, amount) {
 // Check if the current betting round is over
 function isBettingRoundOver(state) {
   const active = activePlayers(state);
-  if (active.length <= 1) return true;
+  if (active.length === 0) return true;
   return active.every(
     (p) =>
       state.playerStates[p.id].hasActed &&

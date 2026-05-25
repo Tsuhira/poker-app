@@ -290,3 +290,135 @@ describe("フルハンドシナリオ（全員チェックのみ）", () => {
     expect(totalChips).toBe(2 * SETTINGS.startingChips);
   });
 });
+
+describe("ショーダウン再現テスト", () => {
+  it("AA vs J10: ボード 2♣3♦J♠9♥J♣ → J10が Three of a Kind で勝つ", () => {
+    const c = (s, r) => ({ suit: s, rank: r });
+
+    // リバーでお互いチェックしてショーダウンへ進む状態を手動で作る
+    const state = {
+      street: "river",
+      dealerIndex: 0,
+      deck: [],
+      communityCards: [c("C",2), c("D",3), c("S",11), c("H",9), c("C",11)],
+      pots: [],
+      currentPlayerIndex: 1, // j10 の番
+      currentBet: 0,
+      minRaise: 10,
+      lastAggressor: null,
+      winners: null,
+      settings: { startingChips: 1000, sb: 5, bb: 10, maxPlayers: 9 },
+      players: [
+        { id: "aa",  displayName: "AA player" },
+        { id: "j10", displayName: "J10 player" },
+      ],
+      playerStates: {
+        aa: {
+          chips: 990, bet: 0, totalBet: 10,
+          holeCards: [c("S",14), c("H",14)],
+          status: "active", hasActed: true,
+        },
+        j10: {
+          chips: 990, bet: 0, totalBet: 10,
+          holeCards: [c("D",11), c("S",10)],
+          status: "active", hasActed: false,
+        },
+      },
+    };
+
+    // j10 がチェック → ラウンド終了 → ショーダウン
+    const result = applyAction(state, "j10", { type: "check" });
+
+    expect(result.street).toBe("showdown");
+    expect(result.playerStates["j10"].holeCards).toHaveLength(2); // 手札が保持されているか
+    expect(result.winners).not.toBeNull();
+    expect(result.winners[0].playerId).toBe("j10");   // J10 が勝者
+    expect(result.winners[0].handRank).toBe(3);         // Three of a Kind
+  });
+});
+
+describe("オールインに対してコール機会を与えるテスト", () => {
+  it("リバーでオールインした後、相手にコール/フォールドの選択肢を与える", () => {
+    const c = (s, r) => ({ suit: s, rank: r });
+    const state = {
+      street: "river",
+      dealerIndex: 0,
+      deck: [],
+      communityCards: [c("C",2), c("D",3), c("S",11), c("H",9), c("C",11)],
+      pots: [],
+      currentPlayerIndex: 0, // aa の番（aa が先にオールイン）
+      currentBet: 0,
+      minRaise: 10,
+      lastAggressor: null,
+      winners: null,
+      settings: { startingChips: 1000, sb: 5, bb: 10, maxPlayers: 9 },
+      players: [
+        { id: "aa",  displayName: "AA player" },
+        { id: "j10", displayName: "J10 player" },
+      ],
+      playerStates: {
+        aa: {
+          chips: 990, bet: 0, totalBet: 10,
+          holeCards: [c("S",14), c("H",14)],
+          status: "active", hasActed: false,
+        },
+        j10: {
+          chips: 990, bet: 0, totalBet: 10,
+          holeCards: [c("D",11), c("S",10)],
+          status: "active", hasActed: false,
+        },
+      },
+    };
+
+    // aa がオールイン → J10 にはまだ選択権があるはず
+    const afterAllIn = applyAction(state, "aa", { type: "all_in" });
+    expect(afterAllIn.street).toBe("river"); // ショーダウンに進んでいないこと
+    expect(afterAllIn.players[afterAllIn.currentPlayerIndex].id).toBe("j10"); // J10 の番
+
+    // j10 がコール → ショーダウン → J10 が Three of a Kind で勝つ
+    const result = applyAction(afterAllIn, "j10", { type: "call" });
+    expect(result.street).toBe("showdown");
+    expect(result.winners[0].playerId).toBe("j10");
+    expect(result.winners[0].handRank).toBe(3); // Three of a Kind
+  });
+
+  it("リバーでオールインした後、相手がフォールドしたら uncontested win", () => {
+    const c = (s, r) => ({ suit: s, rank: r });
+    const state = {
+      street: "river",
+      dealerIndex: 0,
+      deck: [],
+      communityCards: [c("C",2), c("D",3), c("S",11), c("H",9), c("C",11)],
+      pots: [],
+      currentPlayerIndex: 0,
+      currentBet: 0,
+      minRaise: 10,
+      lastAggressor: null,
+      winners: null,
+      settings: { startingChips: 1000, sb: 5, bb: 10, maxPlayers: 9 },
+      players: [
+        { id: "aa",  displayName: "AA player" },
+        { id: "j10", displayName: "J10 player" },
+      ],
+      playerStates: {
+        aa: {
+          chips: 990, bet: 0, totalBet: 10,
+          holeCards: [c("S",14), c("H",14)],
+          status: "active", hasActed: false,
+        },
+        j10: {
+          chips: 990, bet: 0, totalBet: 10,
+          holeCards: [c("D",11), c("S",10)],
+          status: "active", hasActed: false,
+        },
+      },
+    };
+
+    const afterAllIn = applyAction(state, "aa", { type: "all_in" });
+    // j10 がフォールド → aa の uncontested win
+    const result = applyAction(afterAllIn, "j10", { type: "fold" });
+    expect(result.street).toBe("showdown");
+    expect(result.winners[0].playerId).toBe("aa");
+    expect(result.winners[0].handRank).toBeNull(); // uncontested win は hand rank なし
+  });
+});
