@@ -1,6 +1,5 @@
 import {
   doc,
-  collection,
   setDoc,
   updateDoc,
   addDoc,
@@ -9,7 +8,7 @@ import {
   arrayUnion,
   serverTimestamp,
 } from "firebase/firestore";
-import { BaseTransport } from "./interface.js";
+import { BaseTransport, generateRoomCode } from "./interface.js";
 
 // Firestore パス構成
 // poker_rooms/{roomId}                ← RoomState
@@ -29,7 +28,8 @@ export class FirestoreTransport extends BaseTransport {
 
   // ホスト: 部屋を作成して roomId を返す
   async createRoom(settings) {
-    const roomRef = doc(collection(this._db, "poker_rooms"));
+    const code = generateRoomCode();
+    const roomRef = doc(this._db, "poker_rooms", code);
     await setDoc(roomRef, {
       hostId: settings.hostId,
       status: "waiting",
@@ -37,10 +37,10 @@ export class FirestoreTransport extends BaseTransport {
       players: [],
       createdAt: serverTimestamp(),
     });
-    this._roomId = roomRef.id;
+    this._roomId = code;
     this._myPlayerId = settings.hostId;
     this._isHost = true;
-    return this._roomId;
+    return code;
   }
 
   // 参加者: 部屋に入室

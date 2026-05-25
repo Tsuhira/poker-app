@@ -1,5 +1,5 @@
 import Peer from "peerjs";
-import { BaseTransport } from "./interface.js";
+import { BaseTransport, generateRoomCode } from "./interface.js";
 
 // メッセージタイプ定数
 const MSG = {
@@ -28,20 +28,31 @@ export class WebRTCTransport extends BaseTransport {
     };
   }
 
-  // ホスト: 部屋を作成して roomId (= peer.id) を返す
+  // ホスト: 部屋を作成して roomId (= peer.id) を返す（ID 競合時はリトライ）
   async createRoom(_settings) {
-    return new Promise((resolve, reject) => {
-      this._peer = new Peer();
-      this._isHost = true;
+    const tryCreate = (code) =>
+      new Promise((resolve, reject) => {
+        const peer = new Peer(code);
+        this._isHost = true;
 
-      this._peer.on("open", (id) => {
-        this._myPlayerId = id;
-        this._peer.on("connection", (conn) => this._handleIncoming(conn));
-        resolve(id);
+        peer.on("open", (id) => {
+          this._peer = peer;
+          this._myPlayerId = id;
+          this._peer.on("connection", (conn) => this._handleIncoming(conn));
+          resolve(id);
+        });
+
+        peer.on("error", (err) => {
+          if (err.type === "unavailable-id") {
+            peer.destroy();
+            resolve(tryCreate(generateRoomCode())); // 別コードでリトライ
+          } else {
+            reject(err);
+          }
+        });
       });
 
-      this._peer.on("error", reject);
-    });
+    return tryCreate(generateRoomCode());
   }
 
   // 参加者: roomId を使ってホストに接続

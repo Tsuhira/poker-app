@@ -1,3 +1,13 @@
+// 見間違えにくい文字のみ使用 (O/0, I/1/L を除外)
+const ROOM_CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+export function generateRoomCode(length = 6) {
+  return Array.from(
+    { length },
+    () => ROOM_CODE_CHARS[Math.floor(Math.random() * ROOM_CODE_CHARS.length)]
+  ).join("");
+}
+
 // TransportInterface — both WebRTC and Firestore implementations extend this
 export class BaseTransport {
   // ルーム管理
