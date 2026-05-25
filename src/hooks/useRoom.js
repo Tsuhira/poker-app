@@ -4,6 +4,7 @@ import {
   startHand,
   applyAction,
   advanceDealer,
+  addPlayers,
   isGameOver,
 } from "../lib/poker/gameEngine.js";
 import { WebRTCTransport } from "../lib/transport/webrtcTransport.js";
@@ -64,6 +65,7 @@ export function useRoom(myPlayerId, myName) {
   const [myCards, setMyCards] = useState([]);
   const [log, setLog] = useState([]);
   const [gameEnded, setGameEnded] = useState(false);
+  const [pendingPlayers, setPendingPlayers] = useState([]); // ゲーム中に参加した観戦者
 
   const transportRef = useRef(null);
   const engineRef = useRef(null);
@@ -134,13 +136,25 @@ export function useRoom(myPlayerId, myName) {
     setWaitingPlayers([hostPlayer]);
 
     transport.onPlayerJoin((player) => {
-      setWaitingPlayers((prev) =>
-        prev.some((p) => p.id === player.id) ? prev : [...prev, player]
-      );
-      addLog(`${player.displayName} が参加しました`);
+      if (engineRef.current) {
+        // ゲーム進行中 → 観戦者として追加し、現在の状態を送信
+        setPendingPlayers((prev) =>
+          prev.some((p) => p.id === player.id) ? prev : [...prev, player]
+        );
+        // WebRTC 向け: 現在のゲーム状態を新参加者に配信
+        const pubState = makePublicState(engineRef.current);
+        transport.publishState(pubState);
+        addLog(`${player.displayName} が観戦参加しました`);
+      } else {
+        setWaitingPlayers((prev) =>
+          prev.some((p) => p.id === player.id) ? prev : [...prev, player]
+        );
+        addLog(`${player.displayName} が参加しました`);
+      }
     });
     transport.onPlayerLeave((playerId) => {
       setWaitingPlayers((prev) => prev.filter((p) => p.id !== playerId));
+      setPendingPlayers((prev) => prev.filter((p) => p.id !== playerId));
       addLog(`プレイヤーが退出しました`);
     });
 
@@ -201,13 +215,18 @@ export function useRoom(myPlayerId, myName) {
   }, [isHost, publishAndUpdate, addLog]);
 
   const nextHand = useCallback(async () => {
-    const advanced = advanceDealer(engineRef.current);
+    let base = engineRef.current;
+    if (pendingPlayers.length > 0) {
+      base = addPlayers(base, pendingPlayers);
+      setPendingPlayers([]);
+    }
+    const advanced = advanceDealer(base);
     const hand = startHand(advanced);
     setGameEnded(false);
     await publishAndUpdate(hand);
     await distributeHoleCards(hand);
     addLog("--- 次のハンド ---");
-  }, [publishAndUpdate, distributeHoleCards, addLog]);
+  }, [publishAndUpdate, distributeHoleCards, addLog, pendingPlayers]);
 
   const leaveRoom = useCallback(async () => {
     await transportRef.current?.leaveRoom();
@@ -221,6 +240,7 @@ export function useRoom(myPlayerId, myName) {
     setMyCards([]);
     setLog([]);
     setGameEnded(false);
+    setPendingPlayers([]);
   }, []);
 
   const isMyTurn = useMemo(() => {
@@ -229,7 +249,7 @@ export function useRoom(myPlayerId, myName) {
   }, [gameState, myPlayerId]);
 
   return {
-    roomId, isHost, mode, waitingPlayers,
+    roomId, isHost, mode, waitingPlayers, pendingPlayers,
     gameState, myCards, log, gameEnded, isMyTurn,
     createRoom, joinRoom, startGame, sendAction, nextHand, leaveRoom,
   };

@@ -377,6 +377,24 @@ export function applyAction(state, playerId, action) {
   return next;
 }
 
+// 途中参加プレイヤーを追加（次のハンド開始前に呼ぶ）
+export function addPlayers(state, newPlayers) {
+  const next = deepCopy(state);
+  for (const p of newPlayers) {
+    if (next.players.some((existing) => existing.id === p.id)) continue;
+    next.players.push({ id: p.id, displayName: p.displayName });
+    next.playerStates[p.id] = {
+      chips: next.settings.startingChips,
+      bet: 0,
+      totalBet: 0,
+      holeCards: [],
+      status: "active",
+      hasActed: false,
+    };
+  }
+  return next;
+}
+
 // Move dealer button to next non-eliminated player
 export function advanceDealer(state) {
   const next = deepCopy(state);

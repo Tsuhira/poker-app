@@ -2,7 +2,7 @@ import { HoleCards } from "./HoleCards.jsx";
 
 const HAND_NAMES = ["High Card","One Pair","Two Pair","Three of a Kind","Straight","Flush","Full House","Four of a Kind","Straight Flush","Royal Flush"];
 
-export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand }) {
+export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pendingPlayers = [] }) {
   if (!gameState || gameState.street !== "showdown") return null;
 
   const { winners = [], players, playerStates } = gameState;
@@ -50,6 +50,12 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand }) {
             );
           })}
       </div>
+
+      {pendingPlayers.length > 0 && (
+        <p style={{ fontSize: 13, color: "#95d5b2", margin: 0 }}>
+          {pendingPlayers.map((p) => p.displayName).join(", ")} が次のハンドから参加
+        </p>
+      )}
 
       {isHost && (
         <button className="btn-primary btn-lg" onClick={onNextHand} style={{ marginTop: 8 }}>

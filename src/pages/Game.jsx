@@ -14,7 +14,7 @@ const STREET_LABEL = {
 };
 
 export default function Game({ room, myPlayerId }) {
-  const { gameState, myCards, isMyTurn, isHost, gameEnded, roomId } = room;
+  const { gameState, myCards, isMyTurn, isHost, gameEnded, roomId, pendingPlayers } = room;
   if (!gameState) return null;
 
   const { players, playerStates, communityCards, pots, currentPlayerIndex, dealerIndex, settings } = gameState;
@@ -22,6 +22,7 @@ export default function Game({ room, myPlayerId }) {
 
   // Split players: me at bottom, others above
   const myIndex = players.findIndex((p) => p.id === myPlayerId);
+  const isSpectator = myIndex === -1;
   const others = players.filter((p) => p.id !== myPlayerId);
 
   const sbIndex = n === 2 ? dealerIndex : (dealerIndex + 1) % n;
@@ -103,8 +104,12 @@ export default function Game({ room, myPlayerId }) {
         <CommunityCards cards={communityCards} />
       </div>
 
-      {/* My seat */}
-      {myIndex >= 0 && (
+      {/* My seat / Spectator */}
+      {isSpectator ? (
+        <div style={{ textAlign: "center", padding: "16px", color: "#888", fontSize: 13 }}>
+          観戦中 — 次のハンドから参加
+        </div>
+      ) : (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "8px 16px 16px" }}>
           <HoleCards cards={myCards} hidden={!myCards?.length} />
           <PlayerSeat
@@ -133,6 +138,7 @@ export default function Game({ room, myPlayerId }) {
           myPlayerId={myPlayerId}
           isHost={isHost}
           onNextHand={room.nextHand}
+          pendingPlayers={pendingPlayers}
         />
       )}
 
