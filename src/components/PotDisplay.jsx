@@ -1,6 +1,7 @@
-export function PotDisplay({ pots = [] }) {
-  if (!pots.length) return null;
-  const total = pots.reduce((s, p) => s + p.amount, 0);
+export function PotDisplay({ pots = [], playerStates = {} }) {
+  const livePot = Object.values(playerStates).reduce((s, ps) => s + (ps.totalBet ?? 0), 0);
+  const total = pots.length ? pots.reduce((s, p) => s + p.amount, 0) : livePot;
+  if (total === 0) return null;
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: 22, fontWeight: "bold", color: "#f4a261" }}>

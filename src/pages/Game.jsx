@@ -100,7 +100,7 @@ export default function Game({ room, myPlayerId }) {
         flex: 1, display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", gap: 12, padding: "8px 16px",
       }}>
-        <PotDisplay pots={pots} />
+        <PotDisplay pots={pots} playerStates={playerStates} />
         <CommunityCards cards={communityCards} />
       </div>
 
