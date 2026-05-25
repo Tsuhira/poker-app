@@ -4,11 +4,44 @@ const HAND_NAMES = ["High Card","One Pair","Two Pair","Three of a Kind","Straigh
 
 function cardKey(c) { return `${c.suit}${c.rank}`; }
 
-function HighlightCard({ card, inBest, xsmall = false }) {
+// bestCards の中から「役に絡んでるカード」だけ返す
+function getComboCards(rank, bestCards) {
+  if (!bestCards?.length) return [];
+  const cnt = {};
+  for (const c of bestCards) cnt[c.rank] = (cnt[c.rank] || 0) + 1;
+
+  switch (rank) {
+    case 0: // High Card → 最高ランクの1枚
+      return [...bestCards].sort((a, b) => b.rank - a.rank).slice(0, 1);
+    case 1: // One Pair → ペアの2枚
+      return bestCards.filter(c => cnt[c.rank] === 2);
+    case 2: // Two Pair → 両ペアの4枚
+      return bestCards.filter(c => cnt[c.rank] === 2);
+    case 3: // Three of a Kind → トリップスの3枚
+      return bestCards.filter(c => cnt[c.rank] === 3);
+    case 6: // Full House → 全5枚（スリー＋ペア）
+    case 4: // Straight → 全5枚
+    case 5: // Flush → 全5枚
+    case 8: // Straight Flush
+    case 9: // Royal Flush
+      return bestCards;
+    case 7: // Four of a Kind → フォーカードの4枚
+      return bestCards.filter(c => cnt[c.rank] === 4);
+    default:
+      return bestCards;
+  }
+}
+
+// inBest: 有効5枚 → 太枠（緑アウトライン）
+// inCombo: 役に絡む枚 → ハイライト（オレンジ背景フレーム）
+function HighlightCard({ card, inBest, inCombo, xsmall = false }) {
+  const r = xsmall ? 5 : 6;
   return (
     <div style={{
-      opacity: inBest ? 1 : 0.28,
-      borderRadius: xsmall ? 3 : 4,
+      opacity: inBest ? 1 : 0.25,
+      padding: inCombo ? (xsmall ? 2 : 3) : 0,
+      background: inCombo ? "rgba(244,162,97,0.9)" : "transparent",
+      borderRadius: r,
       outline: inBest ? "2px solid #52b788" : "none",
       outlineOffset: "1px",
       flexShrink: 0,
@@ -42,9 +75,9 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pend
             const winInfo = winners.find((w) => w.playerId === p.id);
 
             const holeCards = ps?.holeCards ?? [];
-            // サーバー側で計算済みのハンド結果を使用（クライアント再計算なし）
             const hr = handResults[p.id];
-            const bestSet = new Set(hr?.bestCards?.map(cardKey) ?? []);
+            const bestSet  = new Set(hr?.bestCards?.map(cardKey) ?? []);
+            const comboSet = new Set(getComboCards(hr?.rank, hr?.bestCards).map(cardKey));
 
             return (
               <div key={p.id} style={{
@@ -60,7 +93,9 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pend
                 {holeCards.length > 0 ? (
                   <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 6 }}>
                     {holeCards.map((card, i) => (
-                      <HighlightCard key={i} card={card} inBest={bestSet.has(cardKey(card))} />
+                      <HighlightCard key={i} card={card}
+                        inBest={bestSet.has(cardKey(card))}
+                        inCombo={comboSet.has(cardKey(card))} />
                     ))}
                   </div>
                 ) : (
@@ -73,12 +108,14 @@ export function ShowdownReveal({ gameState, myPlayerId, isHost, onNextHand, pend
                 {communityCards.length > 0 && (
                   <div style={{ display: "flex", gap: 3, justifyContent: "center", marginBottom: 8 }}>
                     {communityCards.map((card, i) => (
-                      <HighlightCard key={i} card={card} inBest={bestSet.has(cardKey(card))} xsmall />
+                      <HighlightCard key={i} card={card}
+                        inBest={bestSet.has(cardKey(card))}
+                        inCombo={comboSet.has(cardKey(card))}
+                        xsmall />
                     ))}
                   </div>
                 )}
 
-                {/* ハンド名（サーバー計算値） */}
                 {hr && (
                   <div style={{ fontSize: 12, color: "#95d5b2", marginBottom: 4 }}>
                     {HAND_NAMES[hr.rank] ?? hr.name ?? ""}
