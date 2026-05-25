@@ -35,15 +35,12 @@ function getComboCards(rank, bestCards) {
 // inBest: 有効5枚 → 太枠（緑アウトライン）
 // inCombo: 役に絡む枚 → ハイライト（オレンジ背景フレーム）
 function HighlightCard({ card, inBest, inCombo, xsmall = false }) {
-  const r = xsmall ? 5 : 6;
   return (
     <div style={{
       opacity: inBest ? 1 : 0.25,
-      padding: inCombo ? (xsmall ? 2 : 3) : 0,
-      background: inCombo ? "rgba(244,162,97,0.9)" : "transparent",
-      borderRadius: r,
-      outline: inBest ? "2px solid #52b788" : "none",
+      outline: inCombo ? "2px solid #52b788" : "none",
       outlineOffset: "1px",
+      borderRadius: xsmall ? 5 : 6,
       flexShrink: 0,
     }}>
       <CardFront {...card} small={!xsmall} xsmall={xsmall} />
