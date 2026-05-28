@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = { startingChips: 1000, sb: 10, bb: 20, maxPlayers: 9 };
 
 // Strip deck and other players' hole cards; include all hole cards at showdown
 function makePublicState(fullState) {
-  const isShowdown = fullState.street === "showdown";
+  const isShowdown = fullState.street === "showdown" && !fullState.uncontested;
   const playerStates = {};
   for (const [id, ps] of Object.entries(fullState.playerStates)) {
     playerStates[id] = {
